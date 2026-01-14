@@ -11,6 +11,7 @@ if not API_KEY:
     st.error("❌ GOOGLE_API_KEY not found")
     st.stop()
 
+
 # ---------- SECURITY ----------
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
     st.error("❌ Please login first")
