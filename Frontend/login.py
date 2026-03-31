@@ -1,123 +1,216 @@
 import streamlit as st
 import requests
 import time
+import base64
+
+BACKEND_URL = "http://127.0.0.1:8000"
 
 # ---------------- PAGE CONFIG ----------------
-st.set_page_config(page_title="UNIBOT | Login", page_icon="🎓", layout="centered")
+st.set_page_config(
+    page_title="UNIBOT AI",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
 
-# ---------------- SESSION INIT ----------------
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-# ---------------- UI STYLE ----------------
+# ---------------- FORCE SIDEBAR VISIBLE ----------------
 st.markdown("""
 <style>
-.stApp {
-    background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), 
-                url('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80');
-    background-size: cover;
+[data-testid="stSidebar"] {
+    display: block !important;
 }
-#MainMenu, footer, header {visibility: hidden;}
-
-.login-card {
-    background: rgba(255, 255, 255, 0.07);
-    backdrop-filter: blur(15px);
-    padding: 50px;
-    border-radius: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    text-align: center;
-}
-
-.title-text {
-    font-size: 3.2rem;
-    font-weight: 850;
-    background: linear-gradient(to right, #00d2ff, #3a7bd5);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-input {
-    background-color: rgba(0, 0, 0, 0.2) !important;
-    color: white !important;
-}
-
-div.stButton > button {
-    width: 100%;
-    background: linear-gradient(90deg, #38bdf8, #6366f1);
-    color: white;
-    border-radius: 12px;
-    font-weight: 700;
-}
+footer {visibility:hidden;}
+header {visibility:hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- LOGIN CARD ----------------
-st.markdown("<div class='login-card'>", unsafe_allow_html=True)
-st.markdown("<h1 class='title-text'>UNIBOT</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color:#94a3b8;'>Next-Gen College Helpdesk</p>", unsafe_allow_html=True)
+# ---------------- SIDEBAR LOGIN TYPE ----------------
+with st.sidebar:
+    st.markdown("## 🔐 Login Type")
+    login_type = st.radio(
+    "Login Type",
+    ["User", "Admin"],
+    label_visibility="collapsed"
+)
+# ---------------- BACKGROUND IMAGE ----------------
+def get_base64(file_path):
+    with open(file_path, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
 
-email = st.text_input("📧 Email")
-username = st.text_input("👤 Username (for new users)")
-phone = st.text_input("📞 Phone")
+bot_image = ""
+try:
+    bot_image = get_base64("bot.png")
+except:
+    pass
+
+# ---------------- CUSTOM CSS (UNCHANGED UI) ----------------
+st.markdown(f"""
+<style>
+.stApp {{
+    background-color: #0e1117;
+    background-image: radial-gradient(circle at 80% 20%, #1a1c2c 0%, #0e1117 100%);
+    overflow: hidden;
+}}
+
+.stApp::after {{
+    content: "";
+    position: fixed;
+    right: 0;
+    top: 80px;
+    width: 600px;
+    height: 600px;
+    background-image: url("data:image/png;base64,{bot_image}");
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.08;
+    z-index: 0;
+}}
+
+.block-container {{
+    position: relative;
+    z-index: 1;
+    padding-top: 4rem;
+}}
+
+.header-text {{
+    color: #ffffff;
+    font-family: 'Segoe UI', sans-serif;
+    text-shadow: 0 0 15px rgba(255,255,255,0.4);
+    margin-bottom: 5px;
+}}
+
+div[data-baseweb="input"] {{
+    background-color: #161922 !important;
+    border: 1px solid #4d4dff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 0 10px rgba(77, 77, 255, 0.2);
+}}
+
+div[data-baseweb="input"]:focus-within {{
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.7) !important;
+    border: 1px solid #00d4ff !important;
+}}
+
+input {{
+    color: white !important;
+}}
+
+.stButton>button {{
+    width: 100%;
+    background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0 0 20px rgba(0, 198, 255, 0.4);
+}}
+
+.stButton>button:hover {{
+    box-shadow: 0 0 35px rgba(0, 198, 255, 0.9);
+}}
+
+label {{
+    color: #d1d1d1 !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------- UI (UNCHANGED) ----------------
+st.markdown("<h1 class='header-text'>🤖 UNIBOT</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='color: #888; margin-top:-10px;'>Next-Gen AI Assistant</h4>", unsafe_allow_html=True)
+
+col1, col2 = st.columns([1,1])
+
+with col1:
+    login_type = st.radio(
+        "",
+        ["User", "Admin"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+
+st.markdown("<br>", unsafe_allow_html=True)
+login_input = st.text_input("👤 User name")
+
+# 👇 ONLY USER MODE me extra fields
+if login_type == "User":
+    email = st.text_input("📧 Email (for new users only)")
+    phone = st.text_input("📞 Phone (for new users only)")
+else:
+    email = ""
+    phone = ""
+
 password = st.text_input("🔑 Password", type="password")
 
+# ---------------- LOGIN BUTTON ----------------
 if st.button("SIGN IN TO UNIBOT"):
 
-    if not (email and password):
-        st.error("❌ Email & Password required")
+    if not login_input or not password:
+        st.error("Login ID & Password required")
         st.stop()
 
     try:
-        # -------- LOGIN TRY --------
         res = requests.post(
-            "http://127.0.0.1:8000/users/login",
-            json={"email": email, "password": password},
+            f"{BACKEND_URL}/users/login",
+            json={
+                "login_id": login_input,
+                "password": password
+            },
             timeout=5
         )
 
         if res.status_code == 200:
-            user = res.json()["user"]
+            data = res.json()
 
-            st.session_state.logged_in = True
-            st.session_state.username = user["username"]
-            st.session_state.email = user["email"]
-            st.session_state.phone = user["phone"]
-
-            st.success("✅ Login successful! Redirecting...")
-            time.sleep(1)
-            st.switch_page("pages/app.py")
-
-        elif res.status_code == 401:
-            # -------- SIGNUP --------
-            if not (username and phone):
-                st.error("⚠️ Username & Phone required for signup")
+            # 🔥 ADMIN VALIDATION
+            if login_type == "Admin" and data["role"] != "admin":
+                st.error("Not an admin account ❌")
                 st.stop()
 
-            signup = requests.post(
-                "http://127.0.0.1:8000/users/signup",
+            st.session_state.logged_in = True
+            st.session_state.role = data["role"]
+            st.session_state.username = data.get("username", "admin")
+
+            st.success("Login successful! Redirecting...")
+            time.sleep(1)
+
+            if data["role"] == "admin":
+                st.switch_page("pages/admin.py")
+            else:
+                st.switch_page("pages/app.py")
+
+            st.stop()
+
+        # ---------------- SIGNUP ONLY FOR USER ----------------
+        elif res.status_code == 404 and login_type == "User":
+
+            if not email or not phone:
+                st.warning("New user detected. Enter Email & Phone to register.")
+                st.stop()
+
+            signup_res = requests.post(
+                f"{BACKEND_URL}/users/signup",
                 json={
-                    "username": username,
                     "email": email,
+                    "username": login_input,
                     "phone": phone,
                     "password": password
                 },
                 timeout=5
             )
 
-            if signup.status_code == 200:
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.session_state.email = email
-                st.session_state.phone = phone
-
-                st.success("🎉 Account created! Redirecting...")
-                time.sleep(1)
-                st.switch_page("pages/app.py")
+            if signup_res.status_code == 200:
+                st.success("Account created! Click Sign In again.")
             else:
-                st.error("❌ Email already exists")
+                st.error(signup_res.json().get("detail", "Signup failed"))
 
-    except Exception as e:
-        st.error("❌ Backend server not running")
+        elif res.status_code == 401:
+            st.error("Incorrect password")
 
-st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.error("User not found or invalid login type")
+
+    except requests.exceptions.ConnectionError:
+        st.error("Backend server not running")

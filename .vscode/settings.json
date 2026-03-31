@@ -1,15 +1,35 @@
 {
+    "workbench.editor.empty.hint": "hidden",
+    "workbench.iconTheme": "material-icon-theme",
+    "files.autoSave": "afterDelay",
+    "[json]": {
+        
+
+
+        "editor.quickSuggestions": {
+            "strings": true
+        },
+        "editor.suggest.insertMode": "replace"
+    },
     "cSpell.words": [
-        "aayega",
-        "abhi",
+        "baseweb",
+        "chandeliya",
+        "checkpw",
         "dotenv",
+        "fastapi",
         "genai",
         "generativeai",
-        "karna",
-        "karne",
-        "liye",
-        "Rishikesh",
+        "gensalt",
+        "hashpw",
+        "MYSQLDATABASE",
+        "MYSQLHOST",
+        "MYSQLPASSWORD",
+        "MYSQLPORT",
+        "MYSQLUSER",
         "Segoe",
-        "yaha"
-    ]
+        "streamlit",
+        "uvicorn",
+        "vectorstore"
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:venv"
 }

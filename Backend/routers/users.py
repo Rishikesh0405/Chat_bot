@@ -1,51 +1,93 @@
-import os
-import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from Backend.database import get_db
+import bcrypt
 
 router = APIRouter()
 
-# Absolute path setup taaki file kahin se bhi access ho sake
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-USER_FILE = os.path.join(BASE_DIR, "users.json")
+# ---------------- MODELS ----------------
 
-class User(BaseModel):
+class SignupData(BaseModel):
     username: str
     email: str
     phone: str
     password: str
 
+
 class LoginData(BaseModel):
-    email: str
+    login_id: str
     password: str
 
-def load_users():
-    if not os.path.exists(USER_FILE):
-        with open(USER_FILE, "w") as f:
-            json.dump([], f)
-        return []
-    with open(USER_FILE, "r") as f:
-        try:
-            return json.load(f)
-        except: return []
 
-def save_users(users):
-    with open(USER_FILE, "w") as f:
-        json.dump(users, f, indent=4)
+# ---------------- SIGNUP (ONLY NORMAL USERS) ----------------
+
+@router.post("/signup")
+def signup(data: SignupData):
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute("SELECT id FROM users WHERE email=%s", (data.email,))
+    if cursor.fetchone():
+        raise HTTPException(status_code=400, detail="Email already exists")
+
+    hashed_password = bcrypt.hashpw(
+        data.password.encode(),
+        bcrypt.gensalt()
+    ).decode()
+
+    cursor.execute(
+        """
+        INSERT INTO users (username, email, phone, password_hash, role)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (data.username, data.email, data.phone, hashed_password, "user")
+    )
+
+    db.commit()
+    cursor.close()
+    db.close()
+
+    return {"message": "Account created successfully"}
+
+
+# ---------------- LOGIN ----------------
 
 @router.post("/login")
 def login(data: LoginData):
-    users = load_users()
-    for u in users:
-        if u["email"] == data.email and u["password"] == data.password:
-            return {"message": "Login success", "user": u}
-    raise HTTPException(status_code=401, detail="Invalid email or password")
 
-@router.post("/signup")
-def signup(user: User):
-    users = load_users()
-    if any(u["email"] == user.email for u in users):
-        raise HTTPException(status_code=400, detail="User already exists")
-    users.append(user.model_dump())
-    save_users(users)
-    return {"message": "Signup success"}
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    # 🔥 Find user by email OR username OR phone
+    cursor.execute(
+        """
+        SELECT * FROM users
+        WHERE email=%s OR username=%s OR phone=%s
+        """,
+        (data.login_id, data.login_id, data.login_id)
+    )
+
+    user = cursor.fetchone()
+
+    if not user:
+        cursor.close()
+        db.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not bcrypt.checkpw(
+        data.password.encode(),
+        user["password_hash"].encode()
+    ):
+        cursor.close()
+        db.close()
+        raise HTTPException(status_code=401, detail="Incorrect password")
+
+    cursor.close()
+    db.close()
+
+    return {
+        "message": "Login successful",
+        "role": user["role"],
+        "username": user["username"]
+    }
