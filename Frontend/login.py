@@ -3,7 +3,7 @@ import requests
 import time
 import base64
 
-BACKEND_URL = "http://127.0.0.1:8000"
+BACKEND_URL = "https://unibot-backend-q65b.onrender.com"
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
