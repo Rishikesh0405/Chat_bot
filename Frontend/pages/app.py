@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import os
 
-BACKEND_URL = "http://127.0.0.1:8000"
+BACKEND_URL = " https://unibot-backend-q65b.onrender.com"
 
 # ---------- PAGE CONFIG ----------
 st.set_page_config(
